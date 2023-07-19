@@ -1,6 +1,3 @@
-(defpackage #:n-tree 
-  (:use #:cl #:alexandria #:misc)
-  (:export #:n-tree-search))
 (in-package #:n-tree)
 
 (defun n-tree-search (test bounds limit)

@@ -9,10 +9,7 @@
 ; (5 point)
 ; ((point) r)
 
-(defpackage #:dyn
-  (:use #:cl #:misc #:trivia #:lol)
-  ;(:export #:defsys))
-)
+
 (in-package #:dyn)
 
 ;(defvar systems (make-hash-table))
@@ -68,7 +65,7 @@
   "Return explicitly specified upper bound. Also return t if bound is open and nil if closed."
   (some (lambda (r) (match r
                       ((explicit-bound '(< <=) component)
-                       (values bound (eq relation '<= t)))))
+                       (values bound (eq relation '<=)))))
         rules))
 
 (defun find-explicit-range (component rules)
