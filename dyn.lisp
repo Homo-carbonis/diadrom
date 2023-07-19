@@ -50,27 +50,16 @@
   `(let ((,g!bounds (mapcar (rcurry #'find-explicit-range ,rules) ,components)))
     (n-tree-search (lambda ,components (and ,@rules)) ,g!bounds *depth-limit*)))
 
-(defpattern explicit-bound (relations component)
-    `(list (and relation (or ,@relations)) ,component (and bound (type number))))
+(defpattern explicit-relation (relation component)
+    `(list ',relation ',component (and value (type number))))
 
-(defun find-explicit-min (component rules)
-  "Return explicitly specified lower bound. Also return t if bound is open and nil if closed."
-  (some (lambda (r) (match r
-                      ((explicit-bound '(> >=) component)
-                       (values bound (eq relation '>=)))))
-        rules))
+(defmacro find-explicit-relation (relation component rules)
+  "Return explicitly specified relation."
+  `(some (lambda (r)
+          (match r ((list ',relation ',component value) value)))
+        ,rules))
 
 
-(defun find-explicit-max (component rules)
-  "Return explicitly specified upper bound. Also return t if bound is open and nil if closed."
-  (some (lambda (r) (match r
-                      ((explicit-bound '(< <=) component)
-                       (values bound (eq relation '<=)))))
-        rules))
-
-(defun find-explicit-range (component rules)
-  (mvbind (min min-open) (find-explicit-min component rules)
-          (mvbind (max max-open) (find-explicit-max component rules)
-                  (values (cons min max) (cons min-open max-open)))))
-                  
-
+(defmacro find-explicit-range (component rules)
+  `(cons (find-explicit-relation > component rules)
+        (find-explicit-relation < component rules)))
