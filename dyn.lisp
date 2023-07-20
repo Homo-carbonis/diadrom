@@ -45,21 +45,24 @@
 ; Most General solver: discretization solution. Subdivide domain and evaluate constraints for every element. Slow or inaccurate but universally applicable. 
 ; the resulting linear system.
   
+(defparameter *depth-limit* 10)
 
-(defmacro! solve (components &body rules)
-  `(let ((,g!bounds (mapcar (rcurry #'find-explicit-range ,rules) ,components)))
-    (n-tree-search (lambda ,components (and ,@rules)) ,g!bounds *depth-limit*)))
+(defmacro solve (components &body rules)
+  (let* ((components (list-if components))
+         (bounds (mapcar (rcurry #'find-explicit-range rules) components)))
+    `(n-tree-search (lambda ,components (and ,@rules)) ',bounds *depth-limit*)))
 
 (defpattern explicit-relation (relation component)
-    `(list ',relation ',component (and value (type number))))
+    `(guard (list r c (and value (type number))) (and (eq r ,relation) (eq c ,component))))
 
-(defmacro find-explicit-relation (relation component rules)
+(defun find-explicit-relation (relation component rules)
   "Return explicitly specified relation."
-  `(some (lambda (r)
-          (match r ((list ',relation ',component value) value)))
-        ,rules))
+  (some (lambda (r)
+          (match r ((explicit-relation relation component) value)))
+        rules))
 
 
-(defmacro find-explicit-range (component rules)
-  `(cons (find-explicit-relation > component rules)
-        (find-explicit-relation < component rules)))
+(defun find-explicit-range (component rules)
+  (let ((upper (find-explicit-relation '> component rules))
+        (lower (find-explicit-relation '< component rules)))
+    (if (and upper lower) (cons upper lower))))

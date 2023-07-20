@@ -6,7 +6,7 @@
         with next-level = (list bounds)
         with midpoints
         do (setf midpoints (mapcar #'midpoint next-level))
-        thereis (some-value test midpoints)
+        thereis (some-value (curry #'apply test) midpoints)
         do (setf next-level (mapcan #'subdivide next-level midpoints))))
 
 
