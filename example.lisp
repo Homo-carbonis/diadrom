@@ -1,5 +1,5 @@
 (in-package #:dyn)
-(defsys pendulum (length theta) ((particle))
+(defsys pendulum (length theta) ((bob particle))
   (= theta (angle y-axis bob))
   (= (distance bob origin) length)
   (gravity bob))
