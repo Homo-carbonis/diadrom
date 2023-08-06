@@ -13,19 +13,31 @@
 (in-package #:dyn)
 (named-readtables:in-readtable lol:lol-syntax)
 
-(defmacro defsys (name variables subsystems &body rules)
-  `(defmacro! ,name ,variables
+(defmacro defsys (name lambda-list subsystems &body rules)
+  `(defun ,name ,lambda-list
+     (let ,(mv-mapcar #`(,a1 (,a1 ,a2)) (unzip2 subsystems))
+       (solve ,@rules))))
+     
+     
+  `(defmacro! (symbolicate "MAKE-" name) ,variables
      (let ((g!subsystems
-             (mvbind (g!subsys-name g!subsys-vars)
-                     (unzip2 ',subsystems)
-                     (zip g!subsys-name
-                          (mapcar #'(lambda (v)
-                                      (mapcar #2`(substitute ,a1 ',a2 ,v)
-                                              (list ,@variables)
-                                              ',variables)) g!subsys-vars)))))
+             ))
        `(let ((,g!rules ',',rules)
         ,@(mapcar #2`(nsubst ,a1 ',a2 ,g!rules) (list ,@variables) ',variables)
-        (nconc ,g!rules ,@g!subsystems))))
+        (nconc ,g!rules ,@g!subsystems))))))
+
+(defun subsystems (bindings subsystems)
+  (mapcan (lambda (subsystem) 
+  (mvbind (names sub-vars) (unzip2 subsystems)
+          (mapcan (lambda (n) 
+          (zip names
+               (nsubst* bindings sub-vars))))
+
+
+(defun nsubst* (substitutions tree)
+  (dolist (s substitutions)
+     (nsubst (cadr s) (car s) tree)
+     
      
 
 ; (mapcar #``(,(symbol-suffix (car ,a1) "-RULES") ,(cdr ,a1)) ',subsystems)
@@ -76,6 +88,3 @@
     (< '>)
     (> '<)
     (= '=)))
-                
-
-
