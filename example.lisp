@@ -2,12 +2,9 @@
 
 ;;; Example 1
 ;;; A simple pendulum modeled as a particle at a fixed length from the origin.
-(defsys pendulum (length theta) ((bob (particle)))
-  (= theta (angle y-axis bob))
-  (= (bob :r) length)
-  (gravity bob))
+(defsys pendulum () (length theta) ((particle :r length :phi theta (gravity))))
 
-(defsys particle (v x y z r rho theta phi) ()
+(defsys point () (v x y z r rho theta phi) ()
   (= x (elt v 1))
   (= y (elt v 2))
   (= z (elt v 3))
@@ -17,19 +14,28 @@
   (= r (sqrt (+ (sqr x) (sqr y) (sqr z))))
   (= rho (sqrt (+ (sqr x) (sqr y)))))
 
-(defrule gravity (body)
-  (force 9.81  body))
+(defsys particle (point) (v x y z r rho theta phi mass force) ()
+  (= (d v) (/ force mass)))
 
-(defrule force (magnitude body)
-  (= (d (body :v)))
+(defrule gravity ()
+  (add-force #(0 -9.81 0) force))
 
-;; The same but for concision using the name of a system class (ie. 'particle') as the name the subsystem.
-(defsys pendulum (length theta) ((particle))
-  (= theta (angle y-axis particle))
-  (= (distance pendulum origin) length)
-  (gravity pendulum))
+;; Result (names will really be gensyms)
 
-;; Some applications of the system
+(= x (elt v 1))
+(= y (elt v 2))
+(= z (elt v 3))
+(= x (* length (sin theta) (cos theta1)))
+(= y (* length (sin theta) (sin theta1)))
+(= z (* length  (cos theta)))
+(= length (sqrt (+ (sqr x) (sqr y) (sqr z))))
+(= rho (sqrt (+ (sqr x) (sqr y))))
+(add-force #(0 -9.81 0) force)
+(= (d v) (/ force mass)))
+
+; The most complex part is deducing the tension force required to keep length constant.
+
+;; Some queries of the system
 
 (pendulum 1 0.43)
 
@@ -48,19 +54,27 @@
 ;; These can then be queried to get results:
 
 (let ((p (pendulum 1 :initial (:theta 0.23) :t 1m)))
-  (print (p :theta)) ; Standard syntax
-  (print (p)) ; :theta can also be inferred since all other variables are specified.
-  )
+  (print (theta p)) ; Standard syntax
+  (print (p))) ; :theta can also be inferred since all other variables are specified.
 
 ;;; Example 2
-;;; Population
+;;; Exponential growth
 
-(defsys growth (n rate) ()
+(defsys growth () (x rate) ()
   (= (d n) ((* rate n))))
 
 ;;; Example 3
-;;; Bodies
-(defsys body
+;;; n-body problem
+(defsys bodies (n) (xs ms)
+  (#n*(particle :v #xs :m #ms :xs (remove #xs xs) :ms (remove #ms ms)
+       (= force (+ #*(/ (* (- #xs v) G m #ms) (sqr (distance v #xs))))))))
+; This one is a lot more complicated. The number of bodies is bound to n and their positions and masses to the vectors xs and ms. The #* read macro repeats a form. Within this form #x refers to the i-th element of the vector #x. The number of repeats is either specified as #n* or inferred from the length of the vectors supplied to #.
+; #* is used twice. Once for each particle and once within each particle to sum the attractive forces from all the other particles.
+; This may well need some revision.
+
+;;; Result
+
+
 
 ;;; Example 4
 ;;; Playing cards
@@ -83,15 +97,10 @@
   (count (= (value card) joker) 2)
   (max n)) ; Anaphor n for size of set
 
-; Maybe focus on continuous dynamical systems
+; Maybe focus on continuous dynamical systems. Combinatorics is probably outside the scope of dyn (at least for now).
 
 
 ;;; Design Points
 
 ;; defsys macros are a wrapper around rules language
 ; (defsys (x) () ...), when applied, will expand to: ((= x ...) ...)
-
-
-;; Maybe try to simplify lisp syntax and standards where possible since we are not writing general purpose programs and potential users may not be lispers. Try not to disrupt standard CL in doing so though.
-; Interpret an unquoted list as a quoted list where the first element does not represent a function.
-; Allow = to be used for any equality test and try to do the right thing.
