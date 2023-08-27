@@ -6,7 +6,7 @@
 (defun add-vertex (graph key)
   (setf (gethash key graph) nil))
 
-(defun add-edge (graph value &rest vertices)
+(defun add-edge (graph value vertices)
   (let ((edge (cons value vertices)))
     (dolist (v vertices)
       (pushnew edge (gethash v graph)))))
