@@ -57,6 +57,16 @@
   (print (theta p)) ; Standard syntax
   (print (p))) ; :theta can also be inferred since all other variables are specified.
 
+;;; Example 1b
+;;; Double Pendulum
+(defsys pendulum () (length theta v) ((particle :r length :phi theta :v v (gravity))))
+
+(defsys double-pendulum () (length-1 length-2 theta-1 theta-2 v1 v2)
+  ((pendulum :length length-1 :theta theta-1 :v v1)
+   (pendulum :length length-2 :theta theta-2 :v v2 (origin v1))))
+
+; Here three tension forces must be inferred. Two on the first particle and one on the second. This may be too much for the solver to handle. Some (add-force ...) rules might be required to make explicit the tension forces. 
+
 ;;; Example 2
 ;;; Exponential growth
 
