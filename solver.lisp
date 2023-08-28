@@ -23,3 +23,7 @@ Collect symbols from each rule and assign to vertices. Rules themselves are assi
                  (cond ((symbolp x) (pushnew x vars))
                        ((consp x) (parse (cdr x)))))))
       (parse (cdr form)))))
+
+(defun make-unary-consistant (v)
+  (
+  (setf (vertex *graph* v) (
