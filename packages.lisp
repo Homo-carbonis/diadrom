@@ -4,7 +4,7 @@
 
 (defpackage #:hypergraph
   (:use #:cl)
-  (:export #:make-graph #:add-vertex #:add-edge))
+  (:export #:make-graph #:add-vertex #:vertex-value #:vertex-edges #:add-edge #:edge-value #:edge-vertices))
 
 (defpackage #:dyn
   (:shadowing-import-from #:trivia #:if-match #:when-match)
