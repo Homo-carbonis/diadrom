@@ -1,4 +1,7 @@
-(in-package #:dyn)
+(defpackage :dyn/solver
+  (:use :cl :parseq :dyn/n-tree :hypergraph))
+
+(in-package :dyn/solver)
 
 #|
 Summary of the solver algorithm:
@@ -10,14 +13,14 @@ Collect symbols from each rule and assign to vertices. Rules themselves are assi
 |#
 
 (defun parse-rules (rules)
-  (let ((graph (make-graph (* 2 (length rules)))))
+  (let ((graph (make-ve-graph)))
     (dolist (r rules graph)
-      (parse-rule graph r))))
+      (parse-rule r graph))))
 
-(defun parse-rule (graph rule)
+(defun parse-rule (rule graph)
   (let ((vars (parse-variables rule)))
-    (dolist (v vars) (add-vertex graph v))
-    (add-edge graph rule vars)))
+    (dolist (v vars) (add-vertex graph :key v :value (list 'inf 'inf)))
+    (add-edge graph :vertices vars :value rule)))
 
 (defun parse-variables (form)
   (let ((vars nil))
@@ -27,29 +30,38 @@ Collect symbols from each rule and assign to vertices. Rules themselves are assi
                        ((consp x) (parse (cdr x)))))))
       (parse (cdr form)))))
 
-(defun make-unary-consistant (graph vertex)
-  (setf (vertex-value graph v)
-        (find-explicit-domain vertex (vertex-nary-edge-values graph vertex 1))))
 
-(defpattern explicit-bound (sign component)
-    `(or
-      (guard (list s c (and value (type number)))
-             (and (eq s ,sign) (eq c ,component)))
-      (guard (list s (and value (type number)) c)
-             (and (eq s (inverse ,sign)) (eq c ,component)))))
+#|(defun make-unary-consistant (graph vertex)
+  (setf (vertex-value graph vertex)
+        (find-explicit-domain vertex (vertex-nary-edge-values graph vertex 1)))) |#
 
-(defun find-explicit-domain (component rules)
-  (let ((upper (find-explicit-bound '> component rules))
-        (lower (find-explicit-bound '< component rules)))
-    (if (and upper lower) (cons upper lower))))
+(defrule sign () (or '= '< '>))
 
-(defun find-explicit-bound (sign component rules)
-  "Return explicitly specified bound."
-  (some (lambda (r)
-          (match r ((explicit-bound sign component) value)))
-        rules))
+(defrule inequality (variable) (or (and inequality-sign a b)))
 
-(defun inverse (sign)
+(defpattern inequality (sign var value)
+  `(or (list (sign ,sign) ,var (and ,value (type number)))
+       (list (inverse ,sign) (and ,value (type number)) ,var)))
+
+(defpattern and* (a b)
+  `(list and ,a ,b))
+
+(defpattern or* (a b)
+  `(list or ,a ,b))
+(defpattern not* (a)
+  `(list not ,a))
+
+(defpattern domain (var)
+  (let ((sign (gensym))
+        (value (gensym)))
+    `(or (inequality ,sign ,var ,value)
+         (and* (domain ,var) (domain ,var))
+         (or* (domain ,var) (domain ,var)))))
+
+(defun parse-ieq (var form)
+  (match form ((inequality sign var) (cons s value))))
+
+(defun invert (sign)
   (case sign
     (< '>)
     (> '<)

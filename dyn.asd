@@ -2,9 +2,7 @@
   :author "Hugh Coleman"
   :version "0.1"
   :description "Dynamical"
-  :depends-on ("misc" "let-over-lambda" "trivia" "srfi-1")
-  :components ((:file "packages")
-               (:file "dyn" :depends-on ("packages"))
-               (:file "n-tree" :depends-on ("packages"))
-               (:file "hypergraph" :depends-on ("packages"))
-               (:file "solver" :depends-on ("packages" "n-tree" "hypergraph"))))
+  :depends-on ("dyn/solver")
+  :class :package-inferred-system
+  :in-order-to ((test-op (load-op "dyn/test")))
+  :perform (test-op (op c) (symbol-call :rove :run-suite :hypergraph/test)))
