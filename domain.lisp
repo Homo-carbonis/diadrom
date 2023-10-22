@@ -1,34 +1,44 @@
 ;;; A domain is represented by a simple value, an interval, or an ordered list of intervals.
 ;;; An interval is a cons of the minimum and maximum values.
 (defpackage :dyn/domain
-  (:use :cl :iterate))
+  (:use :cl)
+  (:export :domain-union
+           :interval-relation))
 
-(defun domain-union (d1 d2)
-  (on nil
-    (iter (for i1 in d1)
-          (iter (for i2 in d2)
-                        ))))
+(in-package :dyn/domain)
 
-(defun interval-union (a b)
-  (ecase (interval-relation a b)
-    ('a-intersects-b (cons (car a) (cdr b)))
-    ('b-subset-a a)
-    ('a-subset-b b)
-    ('b-intersects-a (cons (car b) (cdr a)))
-    ('disjoint) nil))
+(defun domain-union (d1 d2 &optional acc)
+  (cond
+    ((and d1 d2) 
+     (let ((a (car d1))
+           (b (car d2)))
+       (ecase (interval-relation a b)
+         (a<b
+           (domain-union (cdr d1) d2 (cons a acc)))
+         (a-intersects-b
+           (let ((u (cons (car a) (cdr b))))
+             (domain-union (cdr d1) (cons u (cdr d2)) acc)))
+         (b-subset-a 
+           (domain-union d1 (cdr d2) (cons a acc))) 
+         (a-subset-b
+           (domain-union (cdr d1) d2 (cons b acc)))
+         (b-intersects-a
+           (let ((u (cons (car b) (cdr a))))
+             (domain-union (cons u (cdr d1)) d2 acc)))
+         (a>b (domain-union d1 (cdr d2) (cons b acc))))))))
 
 (defun interval-relation (a b)
-  (if (< (car a)) (car b)
-    (if (< (cdr a) (car b))
-        'disjoint
-        (if (< (cdr a) (cdr b))
-            'a-intersects-b
-            'b-subset-a)
-        (if (< (car a) (cdr b))
-            (if (< (cdr a) (cdr b))
-                'a-subset-b
-                'b-intersects-a)
-            'disjoint))))
+  (if (< (car a) (car b))
+      (if (< (cdr a) (car b))
+          'a<b
+          (if (< (cdr a) (cdr b))
+              'a-intersects-b
+              'b-subset-a))
+      (if (< (car a) (cdr b))
+          (if (< (cdr a) (cdr b))
+              'a-subset-b
+              'b-intersects-a)
+          'a>b)))
 
 (defun in-interval (x interval)
   (and (> x (car interval))
