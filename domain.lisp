@@ -3,12 +3,15 @@
 (defpackage :dyn/domain
   (:use :cl)
   (:export :domain-union
-           :interval-relation))
+           :domain-intersection))
 
 (in-package :dyn/domain)
 
 (defun domain-union (d1 d2)
   (reverse (%domain-union d1 d2 nil)))
+
+(defun domain-intersection (d1 d2)
+  (reverse (%domain-intersection d1 d2 nil)))
 
 (defun %domain-union (d1 d2 acc)
   (cond
@@ -32,6 +35,27 @@
     (d1 (append d1 acc))
     (d2 (append d2 acc))
     (t acc)))
+
+(defun %domain-intersection (d1 d2 acc)
+  (if (and d1 d2) 
+      (let ((a (car d1))
+            (b (car d2)))
+        (ecase (interval-relation a b)
+          (a<b
+            (%domain-intersection (cdr d1) d2 acc))
+          (a-intersects-b
+            (let ((i (cons (car b) (cdr a))))
+              (%domain-intersection (cdr d1) d2 (cons i acc))))
+          (b-subset-a 
+            (%domain-intersection d1 (cdr d2) (cons b acc))) 
+          (a-subset-b
+            (%domain-intersection (cdr d1) d2 (cons a acc)))
+          (b-intersects-a
+            (let ((i (cons (car a) (cdr b))))
+              (%domain-intersection d1 (cdr d2) (cons i acc))))
+          (a>b (%domain-intersection d1 (cdr d2) acc))))
+      acc))
+
 
 
 (defun interval-relation (a b)
