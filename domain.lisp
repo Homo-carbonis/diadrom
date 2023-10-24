@@ -1,11 +1,23 @@
-;;; A domain is represented by a simple value, an interval, or an ordered list of intervals.
+;;; A domain is represented by an ordered list of intervals.
 ;;; An interval is a cons of the minimum and maximum values.
+
+;;; TODO: Sort out open/closed intervals.
+
 (defpackage :dyn/domain
-  (:use :cl)
-  (:export :domain-union
+  (:use :cl :utils/misc :float-features)
+  (:export :make-domain
+           :make-interval
+           :domain-union
            :domain-intersection))
 
 (in-package :dyn/domain)
+
+(defun make-interval (&key lower upper)
+  (cons (else lower single-float-negative-infinity)
+        (else upper single-float-positive-infinity)))
+
+(defun make-domain (&rest intervals)
+  (else intervals `(,(make-interval))))
 
 (defun domain-union (d1 d2)
   (reverse (%domain-union d1 d2 nil)))

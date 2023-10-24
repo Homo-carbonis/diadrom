@@ -1,5 +1,5 @@
 (defpackage :dyn/solver
-  (:use :cl :parseq :dyn/n-tree :hypergraph))
+  (:use :cl :hypergraph :dyn/n-tree :dyn/domain :dyn/inequality))
 
 (in-package :dyn/solver)
 
@@ -15,11 +15,12 @@ Collect symbols from each rule and assign to vertices. Rules themselves are assi
 (defun parse-rules (rules)
   (let ((graph (make-ve-graph)))
     (dolist (r rules graph)
-      (parse-rule r graph))))
+      (parse-rule r graph))
+    graph))
 
 (defun parse-rule (rule graph)
   (let ((vars (parse-variables rule)))
-    (dolist (v vars) (add-vertex graph :key v :value (list 'inf 'inf)))
+    (dolist (v vars) (add-vertex graph :key v :value (make-domain)))
     (add-edge graph :vertices vars :value rule)))
 
 (defun parse-variables (form)
@@ -30,39 +31,7 @@ Collect symbols from each rule and assign to vertices. Rules themselves are assi
                        ((consp x) (parse (cdr x)))))))
       (parse (cdr form)))))
 
+(defun make-unary-consistant (vertex graph)
+  (setf (vertex-value vertex graph)
+        (parse-inequalities vertex (vertex-nary-edge-values 1 vertex graph))))
 
-#|(defun make-unary-consistant (graph vertex)
-  (setf (vertex-value graph vertex)
-        (find-explicit-domain vertex (vertex-nary-edge-values graph vertex 1)))) |#
-
-(defrule sign () (or '= '< '>))
-
-(defrule inequality (variable) (or (and inequality-sign a b)))
-
-(defpattern inequality (sign var value)
-  `(or (list (sign ,sign) ,var (and ,value (type number)))
-       (list (inverse ,sign) (and ,value (type number)) ,var)))
-
-(defpattern and* (a b)
-  `(list and ,a ,b))
-
-(defpattern or* (a b)
-  `(list or ,a ,b))
-(defpattern not* (a)
-  `(list not ,a))
-
-(defpattern domain (var)
-  (let ((sign (gensym))
-        (value (gensym)))
-    `(or (inequality ,sign ,var ,value)
-         (and* (domain ,var) (domain ,var))
-         (or* (domain ,var) (domain ,var)))))
-
-(defun parse-ieq (var form)
-  (match form ((inequality sign var) (cons s value))))
-
-(defun invert (sign)
-  (case sign
-    (< '>)
-    (> '<)
-    (= '=)))

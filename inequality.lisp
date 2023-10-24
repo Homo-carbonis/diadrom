@@ -1,31 +1,50 @@
 (defpackage :dyn/inequality
   (:use :cl :alexandria :float-features :parseq :dyn/domain)
-  (:export :parse-inequalities))
+  (:export :parse-inequalities :parse-inequality))
 
 (in-package :dyn/inequality)
 
 (defun parse-inequalities (var list)
-  (with-saved-rules
-    (defrule r () (inequality-tree var))
-    (reduce #'domain-intersection (mapcar (curry #'parseq 'r) list))))
+  (reduce #'domain-intersection (remove nil (mapcar (curry #'parse-inequality var) list))))
 
-(defrule inequality (variable) (or (left-inequality variable) (right-inequality variable)))
+(defun parse-inequality (var form)
+  (parseq 'unary-inequality-tree (list var form)))
+
+(defrule unary-inequality-tree ()
+         (and set-var inequality-tree)
+         (:choose 1)
+         (:let var))
+
+(defrule set-var ()
+  symbol
+  (:external var)
+  (:lambda (v) (setf var v)))
+
+(defrule get-var ()
+  symbol
+  (:external var)
+  (:test (v) (eq v var)))
+
+(defrule inequality () (or left-inequality right-inequality))
 
 ;;; These should really accept an arbitrary number of args like lisp and/or.
-(defrule inequality-and (variable) 
-  (list 'and (inequality-tree variable) (inequality-tree variable)) (:choose 1 2) (:function #'domain-intersection))
+(defrule inequality-and () 
+  (list 'and inequality-tree inequality-tree) (:choose 1 2) (:function #'domain-intersection))
 
-(defrule inequality-or (variable) 
-  (list 'or (inequality-tree variable) (inequality-tree variable)) (:choose 1 2) (:function #'domain-union))
+(defrule inequality-or () 
+  (list 'or inequality-tree inequality-tree) (:choose 1 2) (:function #'domain-union))
 
-(defrule inequality-tree (variable)
-  (or (inequality variable)
-      (inequality-and variable)
-      (inequality-or variable)))
+(defrule inequality-tree ()
+  (or inequality 
+      inequality-and 
+      inequality-or))
 
 
-(defrule left-inequality (variable) (list sign variable number) (:choose 0 2) (:function #'inequality->domain))
-(defrule right-inequality (variable) (list inverse-sign number variable) (:choose 0 1) (:function #'inequality->domain))
+
+(defrule left-inequality ()
+  (list sign get-var number) (:choose 0 2) (:function #'inequality->domain))
+(defrule right-inequality ()
+  (list inverse-sign number get-var) (:choose 0 1) (:function #'inequality->domain))
 
 (defun inequality->domain (sign value)
   (ecase sign
