@@ -1,8 +1,8 @@
-(defpackage :dyn/inequality
-  (:use :cl :alexandria :float-features :parseq :dyn/domain)
+(defpackage :drom/inequality
+  (:use :cl :alexandria :float-features :parseq :drom/domain)
   (:export :parse-inequalities :parse-inequality))
 
-(in-package :dyn/inequality)
+(in-package :drom/inequality)
 
 (defun parse-inequalities (var list)
   (reduce #'domain-intersection (remove nil (mapcar (curry #'parse-inequality var) list))))

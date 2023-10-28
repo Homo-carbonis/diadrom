@@ -3,14 +3,14 @@
 
 ;;; TODO: Sort out open/closed intervals.
 
-(defpackage :dyn/domain
+(defpackage :drom/domain
   (:use :cl :utils/misc :float-features)
   (:export :make-domain
            :make-interval
            :domain-union
            :domain-intersection))
 
-(in-package :dyn/domain)
+(in-package :drom/domain)
 
 (defun make-interval (&key lower upper)
   (cons (else lower single-float-negative-infinity)

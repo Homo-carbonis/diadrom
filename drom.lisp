@@ -10,7 +10,7 @@
 ; ((point) r)
 
 
-(in-package #:dyn)
+(in-package #:drom)
 (named-readtables:in-readtable lol:lol-syntax)
 
 (defmacro defsys (name lambda-list subsystems &body rules)

@@ -1,8 +1,8 @@
-(defpackage :dyn/n-tree 
+(defpackage :drom/n-tree 
   (:use :cl :alexandria :utils/misc)
   (:export :n-tree-search))
 
-(in-package :dyn/n-tree)
+(in-package :drom/n-tree)
 
 (defun n-tree-search (test bounds limit)
   "Perform a breadth-first n-dimensional tree search (ie. bintree, quadtree, octree, etc. depending on the length of 'bounds') for a point satisfying 'test'. Return nil if a result is not found within 'limit' branches"

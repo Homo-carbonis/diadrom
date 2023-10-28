@@ -1,7 +1,7 @@
-(defpackage :dyn/solver
-  (:use :cl :hypergraph :dyn/n-tree :dyn/domain :dyn/inequality))
+(defpackage :drom/solver
+  (:use :cl :hypergraph :drom/n-tree :drom/domain :drom/inequality))
 
-(in-package :dyn/solver)
+(in-package :drom/solver)
 
 #|
 Summary of the solver algorithm:
@@ -34,4 +34,3 @@ Collect symbols from each rule and assign to vertices. Rules themselves are assi
 (defun make-unary-consistant (vertex graph)
   (setf (vertex-value vertex graph)
         (parse-inequalities vertex (vertex-nary-edge-values 1 vertex graph))))
-

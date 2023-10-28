@@ -1,4 +1,4 @@
-(in-package #:dyn)
+(in-package #:drom)
 
 ;;; Example 1
 ;;; A simple pendulum modeled as a particle at a fixed length from the origin.
@@ -89,7 +89,7 @@
 ;;; Example 4
 ;;; Playing cards
 
-(defsys card (suit value) ()
+(defsys card () (suit value) ()
   (in suit (set diamonds hearts spades clubs nil))
   (or (in value (ordered-set ace 1 2 3 4 5 6 7 8 9 10 jack queen king))
       (= value joker))
@@ -107,8 +107,18 @@
   (count (= (value card) joker) 2)
   (max n)) ; Anaphor n for size of set
 
-; Maybe focus on continuous dynamical systems. Combinatorics is probably outside the scope of dyn (at least for now).
+; Maybe focus on continuous dynamical systems. Combinatorics is probably outside
+; the scope of Drom (at least for now).
 
+
+;;; Example 5
+;;; Chemical reaction
+(defsys reactant (concentration partial-order))
+
+(defsys reaction () (temperature rate) ((a reactant) (b reactant))
+  (= (d (concentration a))
+     (d (concentration b))
+     (* rate (** a (partial-order a)) (** b (partial-order b)))))
 
 ;;; Design Points
 
