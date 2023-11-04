@@ -7,6 +7,8 @@
   (:use :cl :utils/misc :float-features)
   (:export :make-domain
            :make-interval
+           :lower
+           :upper
            :domain-union
            :domain-intersection))
 
@@ -15,6 +17,9 @@
 (defun make-interval (&key lower upper)
   (cons (else lower single-float-negative-infinity)
         (else upper single-float-positive-infinity)))
+
+(alias lower car)
+(alias upper cdr)
 
 (defun make-domain (&rest intervals)
   (else intervals `(,(make-interval))))
