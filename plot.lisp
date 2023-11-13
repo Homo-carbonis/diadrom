@@ -1,6 +1,6 @@
 (defpackage :drom/plot
   (:use :cl :sdl2 :drom/raster)
-  (:import-from :utils/misc :on :this :approx= :*epsilon*)
+  (:import-from :utils/misc :on :this :rapprox= :*epsilon* :with-if :then)
   (:import-from :alexandria :curry)
   (:import-from :autowrap :c-aref)
   (:export :plot))
@@ -26,9 +26,9 @@
   (with-texture-lock (texture pixels)
     (raster-map
       (lambda (indices value)
-        (when value 
+        (with-if value 
           (setf (autowrap:c-aref pixels (+ (first indices) (* 512 (second indices))) :unsigned-int)
-                #xffffffff))) 
+                (then #xffffffff #x00000000)))) 
       (curry function (/ (get-ticks) 1000))
       domain
       resolution)))
@@ -53,7 +53,7 @@
               ()
               (clear renderer)
               (sdl2:set-render-draw-color renderer 255 255 255 255)
-              (plot texture (lambda (time x y) (approx= y (sin (+ x time)))) '((0 . 12) (-1 . 1)) '(512 512))
+              (plot texture (lambda (time x y) (rapprox= y (sin (+ x time)))) `((0 . ,(* 4 pi)) (-1 . 1)) '(512 512))
               (sdl2:render-copy renderer texture)
               (sdl2:render-present renderer)
               )

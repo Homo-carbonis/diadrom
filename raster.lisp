@@ -6,21 +6,25 @@
 
 (in-package :drom/raster)
 
+(defun delta (interval n)
+  (/ (- (upper interval) (lower interval)) n))
+
 (defun raster-map (map-function function domain resolution)
-  (labels ((%raster-map (f domain resolution indices)
+  (let* ((domain (reverse domain))
+         (resolution (reverse resolution))
+         (deltas (mapcar #'delta domain resolution)))
+   (labels ((%raster-map (f domain resolution deltas indices)
              (let* ((interval (car domain))
                     (domain (cdr domain))
                     (lower (lower interval))
-                    (upper (upper interval))
                     (n (car resolution))
                     (resolution (cdr resolution))
-                    ;; Use dynamic binding of *epsilon* so we have the correct
-                    ;; precision in `function`.
-                    (*epsilon* (/ (- upper lower) n)))
+                    (delta (car deltas))
+                    (deltas (cdr deltas)))
                (with-if domain
-                        (loop for x from lower below upper by *epsilon*
+                        (loop for x from lower by delta 
                               for i below n
                               for %indices = (cons i indices)
-                              do (then (%raster-map (rcurry f x) domain resolution %indices)
+                              do (then (%raster-map (rcurry f x) domain resolution deltas %indices)
                                        (funcall map-function %indices (funcall f x))))))))
-    (%raster-map (ensure-function function) (reverse domain) (reverse resolution) nil)))
+    (%raster-map (ensure-function function) domain resolution deltas nil))))

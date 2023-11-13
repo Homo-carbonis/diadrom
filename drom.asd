@@ -8,4 +8,4 @@
   :perform (test-op (op c) (symbol-call :rove :run-suite :hypergraph/test)))
 
 (register-system-packages
- "cl-plus-c" '(:plus-c))
+ "cl-autowrap" '(:autowrap))
