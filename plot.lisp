@@ -24,11 +24,10 @@
   "Plot a function over time.
    function --- function time x y"
   (with-texture-lock (texture pixels)
-    (raster-map
+    (raster-map-1
       (lambda (indices value)
-        (with-if value 
-          (setf (autowrap:c-aref pixels (+ (first indices) (* 512 (second indices))) :unsigned-int)
-                (then #xffffffff #x00000000)))) 
+        (setf (autowrap:c-aref pixels (+ (first indices) (* 512 (second indices))) :unsigned-int)
+              (if value #xffffffff #x00000000))) 
       (curry function (/ (get-ticks) 1000))
       domain
       resolution)))
@@ -53,7 +52,7 @@
               ()
               (clear renderer)
               (sdl2:set-render-draw-color renderer 255 255 255 255)
-              (plot texture (lambda (time x y) (rapprox= y (sin (+ x time)))) `((0 . ,(* 4 pi)) (-1 . 1)) '(512 512))
+              (plot texture (lambda (time x) (sin (+ x time))) `((0 . ,(* 4 pi)) (-1 . 1)) '(512 512))
               (sdl2:render-copy renderer texture)
               (sdl2:render-present renderer)
               )

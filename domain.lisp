@@ -18,8 +18,31 @@
   (cons (else lower single-float-negative-infinity)
         (else upper single-float-positive-infinity)))
 
-(alias lower car)
-(alias upper cdr)
+(defun lower (interval) (car interval))
+(defun upper (interval) (cdr interval))
+
+(defun interval-relation (a b)
+  (if (< (car a) (car b))
+      (if (< (cdr a) (car b))
+          'a<b
+          (if (< (cdr a) (cdr b))
+              'a-intersects-b
+              'b-subset-a))
+      (if (< (car a) (cdr b))
+          (if (< (cdr a) (cdr b))
+              'a-subset-b
+              'b-intersects-a)
+          'a>b)))
+
+(defun in-interval (x interval)
+  (and (> x (car interval))
+       (< x (cdr interval)))) 
+
+(defun map-interval (f &rest intervals)
+  (let ((lower-bounds (mapcar #'lower intervals))
+        (upper-bounds (mapcar #'upper intervals))))
+  (make-interval :lower (apply f lower-bounds)
+                 :upper (apply f upper-bounds)))
 
 (defun make-domain (&rest intervals)
   (else intervals `(,(make-interval))))
@@ -74,20 +97,3 @@
       acc))
 
 
-
-(defun interval-relation (a b)
-  (if (< (car a) (car b))
-      (if (< (cdr a) (car b))
-          'a<b
-          (if (< (cdr a) (cdr b))
-              'a-intersects-b
-              'b-subset-a))
-      (if (< (car a) (cdr b))
-          (if (< (cdr a) (cdr b))
-              'a-subset-b
-              'b-intersects-a)
-          'a>b)))
-
-(defun in-interval (x interval)
-  (and (> x (car interval))
-       (< x (cdr interval))))

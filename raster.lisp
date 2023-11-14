@@ -1,8 +1,8 @@
 (defpackage :drom/raster
   (:use :cl :drom/domain)
   (:import-from :utils/misc :on :this :with-if :then :*epsilon*)
-  (:import-from :alexandria :map-product :iota :rcurry :ensure-function)
-  (:export :raster-map))
+  (:import-from :alexandria :map-product :iota :rcurry :ensure-function :lastcar)
+  (:export :raster-map :raster-map-1))
 
 (in-package :drom/raster)
 
@@ -13,18 +13,51 @@
   (let* ((domain (reverse domain))
          (resolution (reverse resolution))
          (deltas (mapcar #'delta domain resolution)))
-   (labels ((%raster-map (f domain resolution deltas indices)
-             (let* ((interval (car domain))
-                    (domain (cdr domain))
-                    (lower (lower interval))
-                    (n (car resolution))
-                    (resolution (cdr resolution))
-                    (delta (car deltas))
-                    (deltas (cdr deltas)))
-               (with-if domain
-                        (loop for x from lower by delta 
-                              for i below n
-                              for %indices = (cons i indices)
-                              do (then (%raster-map (rcurry f x) domain resolution deltas %indices)
-                                       (funcall map-function %indices (funcall f x))))))))
-    (%raster-map (ensure-function function) domain resolution deltas nil))))
+    (labels ((%raster-map (f domain resolution deltas indices)
+               (let* ((interval (car domain))
+                      (domain (cdr domain))
+                      (lower (lower interval))
+                      (n (car resolution))
+                      (resolution (cdr resolution))
+                      (delta (car deltas))
+                      (deltas (cdr deltas)))
+                 (with-if domain
+                   (loop for x from lower by delta 
+                         for i below n
+                         for %indices = (cons i indices)
+                         do (then (%raster-map (rcurry f x) domain resolution deltas %indices)
+                                  (funcall map-function %indices (funcall f x))))))))
+      (%raster-map (ensure-function function) domain resolution deltas nil))))
+
+(defun raster-map-interval (map-function function domain resolution)
+  (let* ((domain (reverse domain))
+         (resolution (reverse resolution))
+         (deltas (mapcar #'delta domain resolution)))
+    (labels ((%raster-map (f domain resolution deltas indices)
+               (let* ((interval (car domain))
+                      (domain (cdr domain))
+                      (lower (lower interval))
+                      (n (car resolution))
+                      (resolution (cdr resolution))
+                      (delta (car deltas))
+                      (deltas (cdr deltas)))
+                 (with-if domain
+                   (loop for x1 = lower then x2
+                         for x2 = (+ x1 delta)
+                         for x = (make-interval :lower x1 :upper x2)
+                         for i below n
+                         for %indices = (cons i indices)
+                         do (then (%raster-map (rcurry f x) domain resolution deltas %indices)
+                                  (funcall map-function %indices (funcall f x))))))))
+      (%raster-map (ensure-function function) domain resolution deltas nil))))
+
+(defun raster-map-1 (map-function function domain resolution)
+  (let ((f (lambda (&rest args)
+             (let* ((butlast (butlast args))
+                    (y1 (apply function (mapcar #'lower butlast)))
+                    (y2 (apply function (mapcar #'upper butlast)))
+                    (y (lower (lastcar args))))
+               (or (< y1 y y2) (< y2 y y1))))))
+    (raster-map-interval map-function f domain resolution)))
+
+
