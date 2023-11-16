@@ -43,6 +43,7 @@
 
 (defrule left-inequality ()
   (list sign get-var number) (:choose 0 2) (:function #'inequality->domain))
+
 (defrule right-inequality ()
   (list inverse-sign number get-var) (:choose 0 1) (:function #'inequality->domain))
 

@@ -1,5 +1,5 @@
 (defpackage :drom/raster
-  (:use :cl :drom/domain)
+  (:use :cl :drom/interval)
   (:import-from :utils/misc :on :this :with-if :then :*epsilon*)
   (:import-from :alexandria :map-product :iota :rcurry :ensure-function :lastcar)
   (:export :raster-map :raster-map-1))
@@ -53,11 +53,9 @@
 
 (defun raster-map-1 (map-function function domain resolution)
   (let ((f (lambda (&rest args)
-             (let* ((butlast (butlast args))
-                    (y1 (apply function (mapcar #'lower butlast)))
-                    (y2 (apply function (mapcar #'upper butlast)))
+             (let* ((y-interval (apply #'map-interval function (butlast args)))
                     (y (lower (lastcar args))))
-               (or (< y1 y y2) (< y2 y y1))))))
+               (in-interval y y-interval)))))
     (raster-map-interval map-function f domain resolution)))
 
 

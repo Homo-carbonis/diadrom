@@ -1,11 +1,13 @@
 ;;; An interval is a cons of the minimum and maximum values.
 ;;; TODO: Sort out open/closed intervals.
 
-(defpackage :drom/interval
-  (:use :cl :utils/misc :float-features)
+(defpackage drom/interval
+  (:use :cl :float-features)
+  (:import-from :utils/misc :with-minmax)
   (:export :make-interval
-           :lower
-           :upper
+           :ensure-interval
+           :inf
+           :sup
            in-interval
 
            :interval-relation
@@ -16,42 +18,52 @@
            :b-intersects-a
            :a>b
 
+           :subintervalp
            :map-interval
            :step-interval))
 
-(in-package :drom/domain)
+(in-package :drom/interval)
 
-(defun make-interval (&key (lower single-float-negative-infinity) (upper single-float-positive-infinity))
-  (cons lower upper))
+(defstruct (interval (:conc-name nil))
+  (inf single-float-negative-infinity :type single-float)
+  (sup single-float-positive-infinity :type single-float))
 
-(defun lower (interval) (car interval))
-(defun upper (interval) (cdr interval))
+(defun ensure-interval (i)
+  "Return i if i is an interval or make an interval if i is a single value."
+  (if (consp i)
+      i
+      (make-interval :inf i :sup i)))
 
 (defun range (interval)
-  (- (upper interval) (lower interval)))
+  (- (sup interval) (inf interval)))
 
 (defun in-interval (x interval)
-  (and (> x (car interval))
-       (< x (cdr interval))))
+  (and (> x (inf interval))
+       (< x (sup interval))))
 
 (defun interval-relation (a b)
-  (if (< (car a) (car b))
-      (if (< (cdr a) (car b))
+  (if (< (inf a) (inf b))
+      (if (< (sup a) (inf b))
           'a<b
-          (if (< (cdr a) (cdr b))
+          (if (< (sup a) (sup b))
               'a-intersects-b
               'b-subset-a))
-      (if (< (car a) (cdr b))
-          (if (< (cdr a) (cdr b))
+      (if (< (inf a) (sup b))
+          (if (< (sup a) (sup b))
               'a-subset-b
               'b-intersects-a)
           'a>b)))
 
+(defun subintervalp (a b)
+  (and (< (inf b) (inf a))
+       (> (sup b) (sup a))))
+
 (defun map-interval (f &rest intervals)
-  (let ((lower-bounds (mapcar #'lower intervals))
-        (upper-bounds (mapcar #'upper intervals))))
-  (make-interval :lower (apply f lower-bounds)
-                 :upper (apply f upper-bounds)))
+  "Apply f to the inf and sup bounds of `intervals` and make a new inverval from the two results."
+  (let ((args-inf (mapcar #'inf intervals))
+        (args-sup (mapcar #'sup intervals)))
+    (with-minmax ((apply f args-inf) (apply f args-sup))
+      (make-interval :inf min :sup max))))
  
 (defun step-interval (interval)
-  (make-interval :lower (upper interval) :upper (+ upper (range interval))))
+  (make-interval :inf (sup interval) :sup (+ (sup interval) (range interval))))
