@@ -1,6 +1,7 @@
 (defpackage :drom/solver
   (:use :cl :hypergraph :drom/domain :drom/inequality)
   (:import-from :utils/misc :alias)
+  (:import-from :alexandria :curry)
   )
 
 (in-package :drom/solver)
@@ -40,8 +41,15 @@ Collect symbols from each rule and assign to vertices. Rules themselves are assi
   (setf (domain vertex graph)
         (parse-inequalities vertex (vertex-nary-edge-values 1 vertex graph))))
 
-(defun solve (graph)
-  (raster-map )
+(defun solve (graph resolution)
+  (let ((rules (graph-edge-values graph))
+        (vars (graph-vertices graph))
+        (box (mapcar (alexandria:rcurry #'vertex-value graph) vars))
+     (f
+          (lambda (&rest vars)
+            (every (mapcar ))
+            ))))
+  (raster-find function box )
   )
 (defun solve (var graph)
   ()

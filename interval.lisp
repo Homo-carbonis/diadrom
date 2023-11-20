@@ -4,7 +4,8 @@
 (defpackage drom/interval
   (:use :cl :float-features)
   (:import-from :utils/misc :with-minmax)
-  (:export :make-interval
+  (:export :interval
+           :make-interval
            :ensure-interval
            :inf
            :sup
