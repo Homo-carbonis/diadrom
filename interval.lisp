@@ -21,9 +21,17 @@
 
            :subintervalp
            :map-interval
-           :step-interval))
+           :step-interval
+           :define-read-macro))
 
 (in-package :drom/interval)
+
+(defun define-read-macro ()
+  (set-dispatch-macro-character #\# #\i #'read-interval))
+
+(defun read-interval (stream c2 p) (declare (ignore c2 p))
+  (let ((i (read stream)))
+    (make-interval :inf (first i) :sup (second i))))
 
 (defstruct (interval (:conc-name nil))
   (inf single-float-negative-infinity :type single-float)
